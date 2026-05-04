@@ -743,9 +743,18 @@
         // ============================================================
         // 5. FISCAL STRESS TEST
         // ============================================================
-        const FiscalStressTest = () => {
+        const FiscalStressTest = ({ marketData }) => {
             const [kurs, setKurs] = useState(15500);
             const [oil, setOil] = useState(82);
+            const [hasInit, setHasInit] = useState(false);
+
+            useEffect(() => {
+                if (!hasInit && marketData && (marketData.kurs || marketData.oil)) {
+                    if (marketData.kurs) setKurs(marketData.kurs);
+                    if (marketData.oil) setOil(marketData.oil);
+                    setHasInit(true);
+                }
+            }, [marketData, hasInit]);
 
             const konstantaMultiplier = 0.35;
             const subsidy = useMemo(() => kurs * oil * konstantaMultiplier, [kurs, oil]);
@@ -952,6 +961,7 @@
             const [liveData, setLiveData] = useState([]);
             const [memberNews, setMemberNews] = useState({});
             const [aiBriefing, setAiBriefing] = useState("");
+            const [marketData, setMarketData] = useState({ kurs: null, oil: null });
             const [loading, setLoading] = useState(true);
             const [fetchError, setFetchError] = useState(null);
 
@@ -972,6 +982,10 @@
                                 setLiveData(data.agency_news || []);
                                 setMemberNews(data.member_news || {});
                                 setAiBriefing(data.ai_briefing || "");
+                                setMarketData({
+                                    kurs: data.live_kurs_usd || null,
+                                    oil: data.live_harga_minyak || null
+                                });
                             }
                             setFetchError(null);
                         })
@@ -1006,13 +1020,13 @@
                         <div className="col-span-12 lg:col-span-6">
                             <TradeRadar />
                         </div>
-                        {/* Center column bottom: Fiscal Stress */}
-                        <div className="col-span-12 lg:col-span-6">
-                            <FiscalStressTest />
-                        </div>
-                        {/* Right column: Whispering General */}
+                        {/* Right column: Whispering General (Sejajar dengan Trade Radar) */}
                         <div className="col-span-12 lg:col-span-3 row-span-2">
                             <WhisperingGeneral liveData={liveData} loading={loading} fetchError={fetchError} aiBriefing={aiBriefing} />
+                        </div>
+                        {/* Center column bottom: Fiscal Stress */}
+                        <div className="col-span-12 lg:col-span-6">
+                            <FiscalStressTest marketData={marketData} />
                         </div>
                         {/* Bottom row: Political Intel — full width */}
                         <div className="col-span-12">
