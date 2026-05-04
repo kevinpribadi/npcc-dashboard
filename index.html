@@ -784,7 +784,7 @@
                                         Rp {kurs.toLocaleString('id-ID')}
                                     </span>
                                 </div>
-                                <input type="range" min="14000" max="17000" step="50"
+                                <input type="range" min="14000" max="17000" step="1"
                                     value={kurs} onChange={e => setKurs(Number(e.target.value))} />
                             </div>
                             <div>
@@ -983,8 +983,8 @@
                                 setMemberNews(data.member_news || {});
                                 setAiBriefing(data.ai_briefing || "");
                                 setMarketData({
-                                    kurs: data.live_kurs_usd || null,
-                                    oil: data.live_harga_minyak || null
+                                    kurs: data.live_kurs || null,
+                                    oil: data.live_minyak || null
                                 });
                             }
                             setFetchError(null);

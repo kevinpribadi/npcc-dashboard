@@ -218,26 +218,26 @@ PENTING: Jangan gunakan format markdown (seperti **bold** atau bullet points). G
 # ============================================================
 def fetch_market_data():
     market_data = {
-        "live_kurs_usd": None,
-        "live_harga_minyak": None
+        "live_kurs": 15500,
+        "live_minyak": 80
     }
     print("  [MARKET] Mengambil data kurs USD/IDR...")
     try:
         usd_idr = yf.Ticker("IDR=X")
         kurs = usd_idr.history(period="1d")['Close'].iloc[-1]
-        market_data["live_kurs_usd"] = round(float(kurs), 2)
-        print(f"  [MARKET] Kurs USD/IDR: Rp {market_data['live_kurs_usd']}")
+        market_data["live_kurs"] = int(round(float(kurs)))
+        print(f"  [MARKET] Kurs USD/IDR: Rp {market_data['live_kurs']}")
     except Exception as e:
-        print(f"  [WARN] Gagal mengambil kurs USD/IDR: {e}")
+        print(f"  [WARN] Gagal mengambil kurs USD/IDR, menggunakan fallback 15500: {e}")
 
     print("  [MARKET] Mengambil data harga Minyak WTI...")
     try:
         wti_oil = yf.Ticker("CL=F")
         oil = wti_oil.history(period="1d")['Close'].iloc[-1]
-        market_data["live_harga_minyak"] = round(float(oil), 2)
-        print(f"  [MARKET] Minyak WTI: USD {market_data['live_harga_minyak']}")
+        market_data["live_minyak"] = int(round(float(oil)))
+        print(f"  [MARKET] Minyak WTI: USD {market_data['live_minyak']}")
     except Exception as e:
-        print(f"  [WARN] Gagal mengambil harga minyak WTI: {e}")
+        print(f"  [WARN] Gagal mengambil harga minyak WTI, menggunakan fallback 80: {e}")
         
     return market_data
 
@@ -268,8 +268,8 @@ def fetch_data():
         "agency_news": agency_news,
         "member_news": member_news,
         "ai_briefing": ai_briefing,
-        "live_kurs_usd": market_data.get("live_kurs_usd"),
-        "live_harga_minyak": market_data.get("live_harga_minyak"),
+        "live_kurs": market_data.get("live_kurs"),
+        "live_minyak": market_data.get("live_minyak"),
         "last_updated": datetime.now().isoformat()
     }
 
