@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nusantara Policy Command Center (NPCC)</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'marquee': 'marquee 120s linear infinite', /* Lambat agar nyaman dibaca */
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(0%)' },
+                            '100%': { transform: 'translateX(-50%)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Recharts -->
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.15.3/umd/Recharts.js"></script>
+
+    <style>
+        :root {
+            --ticker-speed: 50; /* px/detik — turunkan angka untuk memperlambat, naikkan untuk mempercepat */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            overflow-y: auto;
+            min-height: 100vh;
+            width: 100vw;
+        }
+
+        #root {
+            min-height: 100vh;
+            width: 100vw;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            width: 100%;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 2px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .status-glow-green {
+            box-shadow: 0 0 8px #10b981;
+        }
+
+        .status-glow-amber {
+            box-shadow: 0 0 8px #f59e0b;
+        }
+
+        .status-glow-rose {
+            box-shadow: 0 0 8px #f43f5e;
+        }
+
+        /* Pause ticker on hover */
+        .ticker-wrapper:hover .animate-marquee {
+            animation-play-state: paused;
+        }
+        .ticker-wrapper {
+            cursor: default;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- Safe Recharts access ---
+        const RC = window.Recharts || {};
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip: RTooltip, Legend, ResponsiveContainer } = RC;
+
+        // --- ICONS (Inline SVGs) ---
+        const IconShield = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2-1 4-2 7-2 2.89 0 4.7 1.14 7.05 2.15a1 1 0 0 1 .53.86z" /></svg>;
+        const IconActivity = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" /></svg>;
+        const IconFactory = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-400"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" /><path d="M17 18h1" /><path d="M12 18h1" /><path d="M7 18h1" /></svg>;
+        const IconZap = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
+        const IconMessageCircle = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg>;
+
+        // ============================================================
+        // 1. HEADER & TICKER 
+        // ============================================================
+        const Header = ({ liveData, loading, fetchError }) => {
+            const tickerRef = useRef(null);
+            const [animDuration, setAnimDuration] = useState(180); // fallback awal
+
+            const displayItems = useMemo(() => {
+                if (loading) {
+                    return [{ label: "SYSTEM", text: "MENGHUBUNGKAN KE SERVER INTELIJEN..." }];
+                }
+                if (fetchError) {
+                    return [{ label: "ERROR", text: fetchError }];
+                }
+                if (!liveData || liveData.length === 0) {
+                    return [{ label: "ALERT", text: "DATA FEED KOSONG - SILAKAN JALANKAN SCRAPER" }];
+                }
+                return liveData.map(d => ({
+                    label: d.agency.toUpperCase(),
+                    text: d.title,
+                    link: d.link || d.url
+                }));
+            }, [liveData, loading]);
+
+            // Duplikasi konten agar loop marquee berjalan mulus
+            const tickerDuped = Array(8).fill(displayItems).flat();
+
+            // Hitung durasi secara dinamis berdasarkan lebar konten aktual
+            // Rumus: duration (s) = jarak_pixel / kecepatan (px/s)
+            useEffect(() => {
+                const calculate = () => {
+                    if (!tickerRef.current) return;
+                    // Baca CSS variable --ticker-speed dari :root
+                    const speed = parseFloat(
+                        getComputedStyle(document.documentElement).getPropertyValue('--ticker-speed').trim()
+                    ) || 50;
+                    // scrollWidth = total lebar konten; kita gerak -50% jadi jarak = setengahnya
+                    const travelPixels = tickerRef.current.scrollWidth / 2;
+                    const duration = Math.round(travelPixels / speed);
+                    setAnimDuration(duration);
+                };
+                // Tunggu sebentar agar DOM sudah ter-render dengan lebar penuh
+                const timer = setTimeout(calculate, 150);
+                return () => clearTimeout(timer);
+            }, [loading, displayItems.length]);
+
+            return (
+                <div className="w-full border-b border-slate-700/60 bg-slate-950/90 z-50 flex flex-col flex-shrink-0">
+                    <div className="flex items-center justify-between px-6 py-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse status-glow-green"></div>
+                            <h1 className="text-lg font-bold tracking-widest text-slate-100 uppercase flex items-center gap-2">
+                                <IconShield />
+                                COMMISSION VI <span className="text-slate-600 mx-2">|</span> STRATEGIC OVERSIGHT
+                            </h1>
+                        </div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-widest flex items-center gap-2 font-mono">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                            LIVE SYSTEM FEEDS
+                        </div>
+                    </div>
+                    {/* Ticker Tape — kecepatan diatur via CSS var(--ticker-speed) di :root */}
+                    <div className="ticker-wrapper bg-slate-900/60 py-2.5 border-t border-slate-800/60 overflow-hidden relative">
+                        <div
+                            ref={tickerRef}
+                            className="flex whitespace-nowrap animate-marquee"
+                            style={{ width: 'max-content', animationDuration: `${animDuration}s` }}
+                        >
+                            {tickerDuped.map((item, idx) => (
+                                <div key={idx} className="mx-10 flex items-center space-x-2 text-sm group/ticker">
+                                    <span className="text-emerald-400 font-bold tracking-wider">[{item.label}]</span>
+                                    {item.link ? (
+                                        <a 
+                                            href={item.link} 
+                                            target="_blank" 
+                                            rel="noreferrer" 
+                                            className="text-slate-200 font-medium hover:text-emerald-300 hover:underline transition-all duration-200"
+                                        >
+                                            {item.text}
+                                        </a>
+                                    ) : (
+                                        <span className="text-slate-200 font-medium">{item.text}</span>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ============================================================
+        // 2. BUMN WATCHLIST
+        // ============================================================
+        const Sparkline = ({ data, color }) => (
+            <svg viewBox="0 0 100 40" className="w-full h-full" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+                <defs>
+                    <linearGradient id={`grad-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={color} stopOpacity="0.4" />
+                        <stop offset="100%" stopColor={color} stopOpacity="0" />
+                    </linearGradient>
+                </defs>
+                <polygon
+                    fill={`url(#grad-${color.replace('#', '')})`}
+                    points={`0,40 ${data.map((d, i) => `${(i / (data.length - 1)) * 100},${40 - (d / 100) * 40}`).join(" ")} 100,40`}
+                />
+                <polyline
+                    fill="none" stroke={color} strokeWidth="2"
+                    points={data.map((d, i) => `${(i / (data.length - 1)) * 100},${40 - (d / 100) * 40}`).join(" ")}
+                    strokeLinecap="round" strokeLinejoin="round"
+                />
+                <circle cx="100" cy={40 - (data[data.length - 1] / 100) * 40} r="3" fill={color} />
+            </svg>
+        );
+
+        const BUMNWatchlist = () => {
+            const list = [
+                { name: "WASKITA",   code: "WSKT", status: 2, price: 168,   change: -3.45, time: "15:50 WIB", data: [40,35,30,25,20,15,10], pmn: { label: "Rp 8,09 T", pct: 45 } },
+                { name: "GARUDA",    code: "GIAA", status: 1, price: 54,    change: +1.89, time: "15:49 WIB", data: [20,25,22,28,30,28,32], pmn: { label: "Rp 7,50 T", pct: 62 } },
+                { name: "PERTAMINA", code: "PRTM", status: 0, price: 10250, change: +0.74, time: "15:50 WIB", data: [60,62,65,63,68,70,75], pmn: { label: "Rp 15,9 T", pct: 88 } },
+                { name: "BRI",       code: "BBRI", status: 0, price: 4290,  change: +2.38, time: "15:50 WIB", data: [50,52,55,58,60,62,65], pmn: { label: "Rp 10,0 T", pct: 91 } },
+                { name: "TELKOM",    code: "TLKM", status: 1, price: 3180,  change: -1.24, time: "15:49 WIB", data: [55,52,50,48,45,42,40], pmn: { label: "Rp 5,00 T", pct: 76 } },
+            ];
+
+            const getStatusInfo = (status) => {
+                if (status === 0) return { color: '#10b981', cls: 'bg-emerald-500', textCls: 'text-emerald-400', glow: 'status-glow-green', label: 'SEHAT' };
+                if (status === 1) return { color: '#f59e0b', cls: 'bg-amber-500', textCls: 'text-amber-400', glow: 'status-glow-amber', label: 'PANTAU' };
+                return { color: '#f43f5e', cls: 'bg-rose-500', textCls: 'text-rose-400', glow: 'status-glow-rose', label: 'KRITIS' };
+            };
+
+            return (
+                <div className="glass-panel p-4 rounded-2xl h-full flex flex-col">
+                    {/* Header with live indicator */}
+                    <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                        <h2 className="text-sm font-bold flex items-center text-slate-100 tracking-widest uppercase">
+                            <IconActivity />
+                            <span className="ml-2">BUMN Watchlist</span>
+                        </h2>
+                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-500/30 px-1.5 py-0.5 rounded tracking-widest">● IDX LIVE</span>
+                    </div>
+
+                    {/* Column header ala Bloomberg terminal */}
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-x-2 px-2 pb-1.5 mb-1 border-b border-slate-700/50 flex-shrink-0">
+                        <span className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold">Emiten</span>
+                        <span className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold text-right">Harga</span>
+                        <span className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold text-right w-16">Δ%</span>
+                    </div>
+
+                    <div className="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
+                        {list.map((item, idx) => {
+                            const si = getStatusInfo(item.status);
+                            const isUp = item.change >= 0;
+                            return (
+                                <div key={idx} className="bg-slate-800/60 rounded-xl border border-slate-700/40 hover:border-slate-500/60 transition-all duration-300 group cursor-default overflow-hidden">
+                                    {/* Top row: name + price + change */}
+                                    <div className="grid grid-cols-[1fr_auto_auto] gap-x-2 items-center px-3 pt-2.5 pb-1">
+                                        {/* Left: dot + ticker + code */}
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${si.cls} ${si.glow}`}></div>
+                                            <div className="min-w-0">
+                                                <div className="font-bold text-slate-100 text-xs leading-tight">{item.name}</div>
+                                                <div className="text-[9px] text-slate-500 font-mono">{item.code} · <span className={si.textCls}>{si.label}</span></div>
+                                            </div>
+                                        </div>
+                                        {/* Center: price */}
+                                        <div className="text-right">
+                                            <div className="text-sm font-mono font-bold text-slate-100 tabular-nums">
+                                                Rp {item.price.toLocaleString('id-ID')}
+                                            </div>
+                                            <div className="text-[9px] text-slate-500 font-mono">{item.time}</div>
+                                        </div>
+                                        {/* Right: change badge */}
+                                        <div className={`w-16 flex flex-col items-end justify-center px-1.5 py-1 rounded-lg ${
+                                            isUp ? 'bg-emerald-500/15 border border-emerald-500/25' : 'bg-rose-500/15 border border-rose-500/25'
+                                        }`}>
+                                            <span className={`text-xs font-mono font-bold tabular-nums ${
+                                                isUp ? 'text-emerald-400' : 'text-rose-400'
+                                            }`}>
+                                                {isUp ? '▲' : '▼'} {Math.abs(item.change).toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {/* Sparkline row */}
+                                    <div className="h-8 w-full px-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                        <Sparkline data={item.data} color={si.color} />
+                                    </div>
+                                    {/* PMN Progress Bar */}
+                                    <div className="px-3 pb-2.5 pt-1">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="text-[8px] text-slate-500 uppercase tracking-widest font-semibold">PMN Terserap</span>
+                                            <span className="text-[8px] font-mono text-slate-400">{item.pmn.pct}% · {item.pmn.label}</span>
+                                        </div>
+                                        <div className="w-full h-1 bg-slate-700/60 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-700 ${
+                                                    item.pmn.pct >= 80 ? 'bg-emerald-400' :
+                                                    item.pmn.pct >= 50 ? 'bg-amber-400' : 'bg-rose-400'
+                                                }`}
+                                                style={{ width: `${item.pmn.pct}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        // ============================================================
+        // 3. TRADE RADAR
+        // ============================================================
+        const TradeRadar = () => {
+            const [activePartner, setActivePartner] = React.useState('Semua');
+
+            // Dataset 3 mitra dagang utama (dalam USD Juta)
+            const rawData = [
+                { month: 'Okt',  EU_Ekspor: 2850, EU_Impor: 1920, CN_Ekspor: 6100, CN_Impor: 4850, US_Ekspor: 2400, US_Impor: 1250 },
+                { month: 'Nov',  EU_Ekspor: 3200, EU_Impor: 2100, CN_Ekspor: 5800, CN_Impor: 5200, US_Ekspor: 2750, US_Impor: 1380 },
+                { month: 'Des',  EU_Ekspor: 2600, EU_Impor: 2450, CN_Ekspor: 5200, CN_Impor: 6800, US_Ekspor: 3100, US_Impor: 1450 },
+                { month: 'Jan',  EU_Ekspor: 3100, EU_Impor: 1850, CN_Ekspor: 6400, CN_Impor: 4950, US_Ekspor: 2900, US_Impor: 1180 },
+                { month: 'Feb',  EU_Ekspor: 2780, EU_Impor: 2300, CN_Ekspor: 5950, CN_Impor: 5400, US_Ekspor: 3200, US_Impor: 1600 },
+                { month: 'Mar',  EU_Ekspor: 3500, EU_Impor: 2050, CN_Ekspor: 6800, CN_Impor: 5100, US_Ekspor: 3450, US_Impor: 1350 },
+            ];
+
+            const partners = ['Semua', 'EU', 'Tiongkok', 'Amerika Serikat'];
+            const partnerMap = { 'EU': 'EU', 'Tiongkok': 'CN', 'Amerika Serikat': 'US' };
+
+            // Filter kolom berdasarkan partner aktif
+            const chartData = rawData.map(d => {
+                if (activePartner === 'Semua') {
+                    return {
+                        month: d.month,
+                        'EU Ekspor': d.EU_Ekspor, 'EU Impor': d.EU_Impor,
+                        'CN Ekspor': d.CN_Ekspor, 'CN Impor': d.CN_Impor,
+                        'US Ekspor': d.US_Ekspor, 'US Impor': d.US_Impor,
+                    };
+                }
+                const pfx = partnerMap[activePartner];
+                return {
+                    month: d.month,
+                    [`${pfx} Ekspor`]: d[`${pfx}_Ekspor`],
+                    [`${pfx} Impor`]:  d[`${pfx}_Impor`],
+                };
+            });
+
+            const barConfig = [
+                { key: 'EU Ekspor',  fill: '#10b981' },
+                { key: 'EU Impor',   fill: '#34d399' },
+                { key: 'CN Ekspor',  fill: '#f59e0b' },
+                { key: 'CN Impor',   fill: '#fbbf24' },
+                { key: 'US Ekspor',  fill: '#3b82f6' },
+                { key: 'US Impor',   fill: '#93c5fd' },
+            ].filter(b => chartData[0] && b.key in chartData[0]);
+
+            const hasRecharts = BarChart && ResponsiveContainer;
+
+            return (
+                <div className="glass-panel p-5 rounded-2xl h-full flex flex-col">
+                    {/* Header + filter tabs */}
+                    <div className="flex items-start justify-between mb-3 flex-shrink-0 gap-2">
+                        <h2 className="text-sm font-bold flex items-center text-slate-100 tracking-widest uppercase whitespace-nowrap">
+                            <IconFactory />
+                            <span className="ml-2">Trade Radar</span>
+                            <span className="text-slate-500 ml-2 font-normal text-xs normal-case tracking-normal">(USD Juta · 6 Bulan)</span>
+                        </h2>
+                        <div className="flex gap-1 flex-shrink-0">
+                            {partners.map(p => (
+                                <button
+                                    key={p}
+                                    onClick={() => setActivePartner(p)}
+                                    className={`text-[9px] px-2 py-1 rounded font-semibold tracking-wider transition-all duration-200 whitespace-nowrap ${
+                                        activePartner === p
+                                            ? 'bg-blue-600 text-white border border-blue-500'
+                                            : 'bg-slate-800/80 text-slate-400 border border-slate-700/50 hover:border-blue-500/50 hover:text-slate-200'
+                                    }`}
+                                >{p}</button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Chart — dibatasi tinggi agar tidak overflow layout */}
+                    <div className="w-full" style={{ height: '260px', flexShrink: 0 }}>
+                        {hasRecharts ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={chartData}
+                                    margin={{ top: 8, right: 16, left: 14, bottom: 0 }}
+                                    barGap={1}
+                                    barCategoryGap="28%"
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                                    <XAxis dataKey="month" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} dy={8} />
+                                    <YAxis
+                                        stroke="#64748b"
+                                        fontSize={10}
+                                        tickLine={false}
+                                        axisLine={false}
+                                        width={52}
+                                        tickFormatter={v => `${(v/1000).toFixed(1)}B`}
+                                    />
+                                    <RTooltip
+                                        cursor={{ fill: '#1e293b', opacity: 0.5 }}
+                                        contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '11px', color: '#f8fafc' }}
+                                        labelStyle={{ color: '#94a3b8', marginBottom: '4px' }}
+                                        formatter={(value, name) => [`$${value.toLocaleString()} jt`, name]}
+                                    />
+                                    <Legend
+                                        wrapperStyle={{ fontSize: '10px', paddingTop: '8px' }}
+                                        iconType="circle"
+                                        iconSize={8}
+                                    />
+                                    {barConfig.map(b => (
+                                        <Bar key={b.key} dataKey={b.key} fill={b.fill} radius={[3,3,0,0]} maxBarSize={18} />
+                                    ))}
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+                                ⚠ Recharts library gagal dimuat
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Legend konteks 3 mitra */}
+                    <div className="mt-2 flex gap-3 flex-wrap flex-shrink-0">
+                        {[{color:'#10b981',label:'EU'},{color:'#f59e0b',label:'Tiongkok'},{color:'#3b82f6',label:'Amerika Serikat'}].map(l => (
+                            <div key={l.label} className="flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{background:l.color}}></span>
+                                <span className="text-[9px] text-slate-400 font-semibold tracking-wider">{l.label}</span>
+                            </div>
+                        ))}
+                        <span className="text-[9px] text-slate-600 ml-auto font-mono">Warna muda = Impor · Warna tua = Ekspor</span>
+                    </div>
+                </div>
+            );
+        };
+
+        // ============================================================
+        // 4. POLITICAL INTEL — Fraksi Komisi VI
+        // ============================================================
+        const KOMISI6_FRACTIONS = [
+            { id: 'gerindra', name: 'Gerindra',  color: '#dc2626',
+              pimpinan: 'Wakil Ketua: Andre Rosiade',
+              members: ['Andre Rosiade','Khilmi','Muhammad Husein Fadlulloh','Mulan Jameela','Kawendra Lukistian','Unru Baso'] },
+            { id: 'pdip',     name: 'PDI-P',     color: '#be185d',
+              pimpinan: 'Wakil Ketua: Adisatrya Suryo Sulisto',
+              members: ['Adisatrya Suryo Sulisto','Mufti Anam','Darmadi Durianto','Rieke Diah Pitaloka','I Gusti Ngurah Kesuma Kelakan','Sadarestuwati','Ida Nurlaela','Budi Sulistyono','G. M. Totok Hedi Santosa'] },
+            { id: 'golkar',   name: 'Golkar',    color: '#ca8a04',
+              pimpinan: 'Wakil Ketua: Nurdin Halid',
+              members: ['Nurdin Halid','Gde Sumarjaya Linggih','Ahmad Labib','Sarifah Suraidah','Doni Akbar','Firnando Hadityo Ganinduto','Rizki Faisal','Muhammad Sarmuji'] },
+            { id: 'pkb',      name: 'PKB',       color: '#16a34a',
+              pimpinan: 'Ketua: Anggia Erma Rini',
+              members: ['Anggia Erma Rini','Rivqy Abdul Halim','M. Nasim Khan','Ida Fauziyah','Imas Aan Ubudiah'] },
+            { id: 'nasdem',   name: 'NasDem',    color: '#2563eb',
+              pimpinan: '',
+              members: ['Rachmad Gobel','Asep Wahyuwijaya','I Nengah Senantara','Randi Zulmariadi','Rudi Hartono Bangun','Subardi'] },
+            { id: 'pks',      name: 'PKS',       color: '#1d4ed8',
+              pimpinan: '',
+              members: ['Amin Ak.','Rizal Bawazier','Ghufran','Ismail'] },
+            { id: 'pan',      name: 'PAN',       color: '#d97706',
+              pimpinan: 'Wakil Ketua: Eko Patrio',
+              members: ['Eko Patrio','Nasril Bahar','Abdul Hakim Bafagih','Iskandar'] },
+            { id: 'demokrat', name: 'Demokrat',  color: '#0ea5e9',
+              pimpinan: '',
+              members: ['Sartono','Ni Putu Tutik','Herman Khaeron','Faujia Helga'] },
+        ];
+
+        const PoliticalIntel = ({ memberNews }) => {
+            const [selectedFraksi, setSelectedFraksi] = useState(null);
+            const [selectedMember, setSelectedMember] = useState(null);
+            const [liveCache, setLiveCache] = React.useState({});
+            const [fetchingSet, setFetchingSet] = React.useState(new Set());
+
+            const handleFraksiClick = (fraksi) => {
+                if (selectedFraksi?.id === fraksi.id) {
+                    setSelectedFraksi(null); setSelectedMember(null);
+                } else {
+                    setSelectedFraksi(fraksi); setSelectedMember(null);
+                }
+            };
+
+            const fetchLiveNews = React.useCallback(async (member) => {
+                if (fetchingSet.has(member)) return;
+                setFetchingSet(prev => new Set([...prev, member]));
+                try {
+                    const q = encodeURIComponent('"' + member + '" DPR OR Komisi VI');
+                    const rssUrl = encodeURIComponent('https://news.google.com/rss/search?q=' + q + '&hl=id&gl=ID&ceid=ID:id');
+                    const apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + rssUrl + '&count=1';
+                    const res = await fetch(apiUrl);
+                    if (!res.ok) throw new Error('api_error');
+                    const data = await res.json();
+                    if (data.status === 'ok' && data.items && data.items.length > 0) {
+                        const item = data.items[0];
+                        setLiveCache(prev => ({ ...prev, [member]: { title: item.title, link: item.link, published: item.pubDate, source: 'live' } }));
+                    } else {
+                        setLiveCache(prev => ({ ...prev, [member]: { error: true } }));
+                    }
+                } catch (e) {
+                    setLiveCache(prev => ({ ...prev, [member]: { error: true } }));
+                } finally {
+                    setFetchingSet(prev => { const n = new Set(prev); n.delete(member); return n; });
+                }
+            }, [fetchingSet]);
+
+            useEffect(() => {
+                if (selectedMember && !memberNews[selectedMember] && !liveCache[selectedMember] && !fetchingSet.has(selectedMember)) {
+                    fetchLiveNews(selectedMember);
+                }
+            }, [selectedMember]);
+
+            const getNews = (m) => memberNews[m] || liveCache[m] || null;
+            const news = selectedMember ? getNews(selectedMember) : null;
+            const isLoading = selectedMember ? fetchingSet.has(selectedMember) : false;
+
+            return (
+                <div className="glass-panel p-5 rounded-2xl flex flex-col" style={{minHeight:'220px'}}>
+                    <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                        <h2 className="text-sm font-bold flex items-center text-slate-100 tracking-widest uppercase">
+                            <IconShield />
+                            <span className="ml-2">Political Intel</span>
+                            <span className="text-slate-500 ml-2 font-normal text-xs normal-case tracking-normal">— Fraksi Komisi VI DPR RI</span>
+                        </h2>
+                        {selectedFraksi && (
+                            <span className="text-[9px] px-2 py-1 rounded font-bold tracking-widest border"
+                                style={{background: selectedFraksi.color+'22', color: selectedFraksi.color, borderColor: selectedFraksi.color+'55'}}>
+                                {selectedFraksi.name.toUpperCase()}
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-4 flex-1 min-h-0">
+                        {/* LEFT: Fraction Buttons */}
+                        <div className="col-span-2 flex flex-col gap-1.5 overflow-y-auto pr-1">
+                            <span className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold mb-1 flex-shrink-0">Fraksi</span>
+                            {KOMISI6_FRACTIONS.map(f => (
+                                <button key={f.id} onClick={() => handleFraksiClick(f)}
+                                    className="text-left px-3 py-2.5 rounded-lg text-xs font-bold tracking-wider transition-all duration-200 border flex-shrink-0"
+                                    style={selectedFraksi?.id === f.id
+                                        ? {background: f.color, borderColor: f.color, color: '#fff'}
+                                        : {background:'rgba(30,41,59,0.6)', borderColor:'rgba(71,85,105,0.5)', color:'#94a3b8'}
+                                    }
+                                >{f.name}</button>
+                            ))}
+                        </div>
+
+                        {/* CENTER: Member List */}
+                        <div className="col-span-4 border-l border-slate-700/50 pl-4 overflow-y-auto">
+                            {!selectedFraksi ? (
+                                <div className="flex items-center justify-center h-full text-slate-600 text-xs text-center px-4">
+                                    ← Pilih fraksi untuk melihat daftar anggota Komisi VI
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-2 mb-3 flex-shrink-0">
+                                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{background: selectedFraksi.color}}></span>
+                                        <div>
+                                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                                                {selectedFraksi.name} — {selectedFraksi.members.length} Anggota
+                                            </span>
+                                            {selectedFraksi.pimpinan && (
+                                                <div className="text-[9px] text-amber-400 font-semibold mt-0.5">⭐ {selectedFraksi.pimpinan}</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        {selectedFraksi.members.map((member, i) => {
+                                            const mdata = getNews(member);
+                                            const hasNews = !!(mdata && !mdata.error);
+                                            const isFetching = fetchingSet.has(member);
+                                            const isSel = selectedMember === member;
+                                            return (
+                                                <button key={i} onClick={() => setSelectedMember(isSel ? null : member)}
+                                                    className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-all duration-200 border ${
+                                                        isSel
+                                                            ? 'bg-slate-700 border-slate-500 text-slate-100'
+                                                            : 'bg-slate-800/40 border-slate-700/40 text-slate-300 hover:bg-slate-700/60 hover:border-slate-600'
+                                                    }`}>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-semibold">{member}</span>
+                                                        {isFetching ? (
+                                                            <span className="text-[8px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold tracking-wider animate-pulse">SYNC</span>
+                                                        ) : hasNews ? (
+                                                            <span className="text-[8px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold tracking-wider">NEWS</span>
+                                                        ) : null}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* RIGHT: Member News Detail */}
+                        <div className="col-span-6 border-l border-slate-700/50 pl-4 overflow-y-auto">
+                            {!selectedMember ? (
+                                <div className="flex items-center justify-center h-full text-slate-600 text-xs text-center px-4">
+                                    ← Pilih anggota untuk melihat berita terbaru
+                                </div>
+                            ) : isLoading ? (
+                                <div className="fade-in space-y-3">
+                                    <div className="text-xs font-bold text-slate-100">{selectedMember}</div>
+                                    <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50 space-y-3">
+                                        <div className="h-2.5 bg-slate-700 rounded-full w-20 animate-pulse"></div>
+                                        <div className="space-y-2 pt-1">
+                                            <div className="h-3 bg-slate-700 rounded-full w-full animate-pulse"></div>
+                                            <div className="h-3 bg-slate-700 rounded-full w-5/6 animate-pulse" style={{animationDelay:'0.15s'}}></div>
+                                            <div className="h-3 bg-slate-700 rounded-full w-4/6 animate-pulse" style={{animationDelay:'0.3s'}}></div>
+                                        </div>
+                                        <div className="flex justify-between pt-2 border-t border-slate-700/40">
+                                            <div className="h-2 bg-slate-700/60 rounded-full w-28 animate-pulse"></div>
+                                            <div className="h-2 bg-slate-700/60 rounded-full w-16 animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-500">
+                                        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse inline-block"></span>
+                                        Menyinkronkan data intelijen via Google News...
+                                    </div>
+                                </div>
+                            ) : news && !news.error ? (
+                                <div className="fade-in">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest bg-blue-400/10 border border-blue-500/30 px-2 py-0.5 rounded">LATEST NEWS</span>
+                                        {news.source === 'live' && (
+                                            <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-400/10 border border-emerald-500/30 px-2 py-0.5 rounded">● LIVE</span>
+                                        )}
+                                    </div>
+                                    <div className="text-xs font-bold text-slate-100 mb-2">{selectedMember}</div>
+                                    <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
+                                        <p className="text-[11px] text-slate-200 leading-relaxed font-medium mb-3">{news.title}</p>
+                                        <div className="flex items-center justify-between pt-2 border-t border-slate-700/40">
+                                            <span className="text-[9px] text-slate-500 font-mono">{news.published}</span>
+                                            <a href={news.link} target="_blank" rel="noreferrer"
+                                                className="text-[9px] text-blue-400 hover:text-blue-300 underline underline-offset-2">Buka Artikel ➚</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="fade-in">
+                                    <div className="text-xs font-bold text-slate-100 mb-3">{selectedMember}</div>
+                                    <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40 text-center space-y-3">
+                                        <div className="text-slate-500 text-xl">📡</div>
+                                        <p className="text-[10px] text-slate-400">Tidak ada berita ditemukan untuk anggota ini.</p>
+                                        <button
+                                            onClick={() => { setLiveCache(prev => { const n = {...prev}; delete n[selectedMember]; return n; }); fetchLiveNews(selectedMember); }}
+                                            className="text-[9px] px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 transition-all font-semibold tracking-wider">
+                                            🔄 Coba Ambil Ulang
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ============================================================
+        // 5. FISCAL STRESS TEST
+        // ============================================================
+        const FiscalStressTest = () => {
+            const [kurs, setKurs] = useState(15500);
+            const [oil, setOil] = useState(82);
+
+            const konstantaMultiplier = 0.35;
+            const subsidy = useMemo(() => kurs * oil * konstantaMultiplier, [kurs, oil]);
+            const deficitThreshold = 500000;
+            const isAlert = subsidy > deficitThreshold;
+
+            return (
+                <div className="glass-panel p-5 rounded-2xl h-full flex flex-col">
+                    <div className="flex justify-between items-start mb-4">
+                        <h2 className="text-sm font-bold flex items-center text-slate-100 tracking-widest uppercase">
+                            <IconZap />
+                            <span className="ml-2">Fiscal Stress Test</span>
+                        </h2>
+                        {isAlert && (
+                            <span className="flex items-center text-[10px] font-bold bg-rose-500/20 text-rose-400 px-2.5 py-1 rounded border border-rose-500/50 animate-pulse tracking-widest">
+                                ⚠ DEFICIT WARNING
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="flex-1 grid grid-cols-2 gap-6">
+                        <div className="flex flex-col justify-center space-y-6 pl-2">
+                            <div>
+                                <div className="flex justify-between mb-2">
+                                    <span className="text-xs text-slate-400 uppercase tracking-widest font-semibold">Kurs USD</span>
+                                    <span className="text-sm font-mono text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded">
+                                        Rp {kurs.toLocaleString('id-ID')}
+                                    </span>
+                                </div>
+                                <input type="range" min="14000" max="17000" step="50"
+                                    value={kurs} onChange={e => setKurs(Number(e.target.value))} />
+                            </div>
+                            <div>
+                                <div className="flex justify-between mb-2">
+                                    <span className="text-xs text-slate-400 uppercase tracking-widest font-semibold">Harga Minyak (ICP)</span>
+                                    <span className="text-sm font-mono text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded">
+                                        ${oil}/bbl
+                                    </span>
+                                </div>
+                                <input type="range" min="60" max="100" step="1"
+                                    value={oil} onChange={e => setOil(Number(e.target.value))} />
+                            </div>
+                        </div>
+
+                        <div className={`relative rounded-xl border-2 flex flex-col items-center justify-center p-4 transition-all duration-500 shadow-inner ${isAlert
+                            ? 'bg-rose-950/30 border-rose-500/40 shadow-rose-900/20'
+                            : 'bg-slate-900/50 border-slate-700/50'
+                            }`}>
+                            <span className="text-xs uppercase text-slate-400 mb-2 tracking-widest font-semibold">Estimasi Subsidi</span>
+                            <div className={`text-4xl font-mono font-bold tracking-tighter transition-colors duration-500 ${isAlert ? 'text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.5)]' : 'text-slate-100'}`}>
+                                Rp {(subsidy / 1000).toLocaleString('id-ID', { maximumFractionDigits: 1 })} T
+                            </div>
+                            <div className="w-full bg-slate-800 h-2 mt-5 rounded-full overflow-hidden border border-slate-700">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-500 ${isAlert ? 'bg-rose-500' : 'bg-emerald-500'}`}
+                                    style={{ width: `${Math.min((subsidy / (deficitThreshold * 1.2)) * 100, 100)}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-[10px] text-slate-500 mt-2 font-mono">Batas: Rp {(deficitThreshold / 1000).toLocaleString('id-ID')} T</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ============================================================
+        // 5. THE WHISPERING GENERAL (Real-Time Scraper Update)
+        // ============================================================
+        const TypewriterText = ({ text }) => {
+            const [displayedText, setDisplayedText] = useState("");
+            
+            useEffect(() => {
+                setDisplayedText("");
+                let i = 0;
+                // Kecepatan ketik: 15ms per karakter
+                const interval = setInterval(() => {
+                    setDisplayedText(text.substring(0, i));
+                    i += 1;
+                    if (i > text.length) {
+                        setDisplayedText(text);
+                        clearInterval(interval);
+                    }
+                }, 15);
+                return () => clearInterval(interval);
+            }, [text]);
+
+            return (
+                <span className="whitespace-pre-wrap leading-relaxed text-[11px] font-medium text-slate-300">
+                    {displayedText}
+                    {displayedText.length < text.length ? <span className="animate-pulse font-bold text-blue-400">|</span> : ''}
+                </span>
+            );
+        };
+
+        const WhisperingGeneral = ({ liveData, loading, fetchError, aiBriefing }) => {
+            const [chat, setChat] = useState([]);
+            const scrollRef = useRef(null);
+
+            useEffect(() => {
+                if (!loading && !fetchError) {
+                    const introText = aiBriefing || 'Sistem intelijen aktif. Database tersinkronisasi. Silakan pilih sumber pelaporan lembaga untuk meninjau rilis pers (news) terbaru.';
+                    setChat([{ sender: 'bot', text: introText, isIntro: true }]);
+                }
+            }, [loading, fetchError, aiBriefing]);
+
+            const handleTopic = (agencyName) => {
+                setChat(prev => [...prev, { sender: 'user', text: agencyName }]);
+
+                setTimeout(() => {
+                    const dataItem = liveData.find(d => d.agency === agencyName);
+
+                    if (!dataItem) {
+                        setChat(prev => [...prev, { sender: 'bot', text: `Data belum ditarik oleh engine scraper untuk ${agencyName}. Pastikan engine.py telah berjalan.` }]);
+                        return;
+                    }
+
+                    const topicData = {
+                        title: `LATEST NEWS: ${dataItem.title}`,
+                        link: dataItem.link,
+                        sections: [
+                            { label: 'PRO (ANALISIS OTOMATIS)', color: 'text-emerald-400', points: dataItem.analysis.pro },
+                            { label: 'KONTRA (ANALISIS OTOMATIS)', color: 'text-amber-400', points: dataItem.analysis.kontra },
+                            { label: 'PERTANYAAN KRITIS', color: 'text-rose-400', points: dataItem.analysis.tanya }
+                        ]
+                    };
+
+                    setChat(prev => [...prev, { sender: 'bot', topicData }]);
+                }, 200);
+            };
+
+            useEffect(() => {
+                if (scrollRef.current) {
+                    scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, [chat]);
+
+            return (
+                <div className="glass-panel p-5 rounded-2xl h-full max-h-[450px] overflow-y-auto flex flex-col custom-scrollbar">
+                    <h2 className="text-sm font-bold mb-4 flex items-center text-slate-100 tracking-widest uppercase">
+                        <IconMessageCircle />
+                        <span className="ml-2">The Whispering General</span>
+                    </h2>
+
+                    <div className="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scrollbar">
+                        {chat.map((m, i) => (
+                            <div key={i} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'} fade-in`}>
+                                <div className={`max-w-[92%] p-3.5 rounded-xl text-sm shadow-md ${m.sender === 'user'
+                                    ? 'bg-blue-600/80 text-white rounded-br-none border border-blue-500/50'
+                                    : 'bg-slate-800/90 border border-slate-600/50 rounded-bl-none text-slate-200'
+                                    }`}>
+                                    {m.topicData ? (
+                                        <div className="flex flex-col gap-3">
+                                            <span className="text-xs font-bold text-slate-100 border-b border-slate-600/60 pb-2 tracking-widest leading-normal">
+                                                {m.topicData.title}
+                                            </span>
+                                            {m.topicData.sections.map((s, si) => (
+                                                <div key={si} className="bg-slate-900/40 p-2.5 rounded-lg border border-slate-700/30">
+                                                    <span className={`text-[10px] font-bold ${s.color} tracking-wider`}>{s.label}</span>
+                                                    <ul className="mt-1.5 pl-4 text-[11px] space-y-1.5 text-slate-300 list-disc font-medium">
+                                                        {s.points.map((p, pi) => <li key={pi} className="leading-snug">{p}</li>)}
+                                                    </ul>
+                                                </div>
+                                            ))}
+                                            <a href={m.topicData.link} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 italic font-medium w-full text-right underline underline-offset-2">Buka Artikel Berita Asli ➚</a>
+                                        </div>
+                                    ) : m.isIntro ? (
+                                        <TypewriterText text={m.text} />
+                                    ) : (
+                                        <span className="whitespace-pre-wrap leading-relaxed text-[11px]">{m.text}</span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        <div ref={scrollRef}></div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 flex-shrink-0">
+                        {loading ? (
+                            <div className="col-span-2 text-center text-xs text-slate-500 py-3 bg-slate-800/50 rounded animate-pulse">
+                                Mengambil data feed dari Local Server...
+                            </div>
+                        ) : fetchError ? (
+                            <div className="col-span-2 text-center text-[10px] text-rose-400 py-3 px-2 bg-rose-500/10 border border-rose-500/30 rounded">
+                                {fetchError}
+                            </div>
+                        ) : liveData.map(d => (
+                            <button
+                                key={d.agency}
+                                onClick={() => handleTopic(d.agency)}
+                                className="bg-slate-800/80 hover:bg-slate-700 border border-slate-600/50 hover:border-blue-500/50 rounded-lg py-2 px-1 text-[9px] text-slate-300 font-semibold tracking-wider transition-all duration-200 hover:text-white truncate shadow-sm overflow-hidden"
+                            >
+                                {d.agency.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // ============================================================
+        // MAIN APP (Fetcher Root)
+        // ============================================================
+        const App = () => {
+            const [liveData, setLiveData] = useState([]);
+            const [memberNews, setMemberNews] = useState({});
+            const [aiBriefing, setAiBriefing] = useState("");
+            const [loading, setLoading] = useState(true);
+            const [fetchError, setFetchError] = useState(null);
+
+            useEffect(() => {
+                const fetchData = () => {
+                    fetch('./live_data.json', { cache: 'no-store' })
+                        .then(res => {
+                            if (!res.ok) throw new Error("HTTP error " + res.status);
+                            return res.json();
+                        })
+                        .then(data => {
+                            // Support format lama (array) & baru (object)
+                            if (Array.isArray(data)) {
+                                setLiveData(data);
+                                setMemberNews({});
+                                setAiBriefing("");
+                            } else {
+                                setLiveData(data.agency_news || []);
+                                setMemberNews(data.member_news || {});
+                                setAiBriefing(data.ai_briefing || "");
+                            }
+                            setFetchError(null);
+                        })
+                        .catch(err => {
+                            console.error('Error fetching data:', err);
+                            setFetchError("Gagal memuat live_data.json. Pastikan server lokal aktif dan tidak diblokir CORS.");
+                        })
+                        .finally(() => {
+                            setLoading(false);
+                        });
+                };
+
+                // Fetch pertama
+                fetchData();
+
+                // Polling update otomatis UI secara sinkron (tiap 5 menit jika JSON diganti scheduler)
+                const interval = setInterval(fetchData, 300000);
+                return () => clearInterval(interval);
+            }, []);
+
+            return (
+                <div className="min-h-screen w-screen flex flex-col bg-slate-900 overflow-y-auto font-sans text-slate-50">
+                    {/* Header diinjeksi dengan headline data berjalan */}
+                    <Header liveData={liveData} loading={loading} fetchError={fetchError} />
+
+                    <main className="flex-1 p-4 grid grid-cols-12 gap-5 overflow-y-auto" style={{gridTemplateRows:'auto auto auto', alignItems:'start'}}>
+                        {/* Left column: BUMN Watchlist */}
+                        <div className="col-span-12 lg:col-span-3 row-span-2">
+                            <BUMNWatchlist />
+                        </div>
+                        {/* Center column top: Trade Radar */}
+                        <div className="col-span-12 lg:col-span-6">
+                            <TradeRadar />
+                        </div>
+                        {/* Center column bottom: Fiscal Stress */}
+                        <div className="col-span-12 lg:col-span-6">
+                            <FiscalStressTest />
+                        </div>
+                        {/* Right column: Whispering General */}
+                        <div className="col-span-12 lg:col-span-3 row-span-2">
+                            <WhisperingGeneral liveData={liveData} loading={loading} fetchError={fetchError} aiBriefing={aiBriefing} />
+                        </div>
+                        {/* Bottom row: Political Intel — full width */}
+                        <div className="col-span-12">
+                            <PoliticalIntel memberNews={memberNews} />
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        // --- RENDER ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
