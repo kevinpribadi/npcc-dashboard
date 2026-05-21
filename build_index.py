@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+html = r"""<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
@@ -543,4 +544,10 @@ async function loadData() {
 loadData();
 </script>
 </body>
-</html>
+</html>"""
+
+output_path = r"c:/Users/USER/Desktop/Website tenaga ahli/index.html"
+with open(output_path, "w", encoding="utf-8") as f:
+    f.write(html)
+
+print(f"SUCCESS: index.html written ({len(html)} bytes)")

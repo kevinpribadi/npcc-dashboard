@@ -4,7 +4,7 @@ import os
 import time
 import urllib.parse
 from datetime import datetime
-import google.generativeai as genai
+
 import yfinance as yf
 
 # ============================================================
@@ -173,45 +173,10 @@ def fetch_member_news():
     return results
 
 # ============================================================
-# 6. FASE 3: GENERATE AI BRIEFING (GEMINI)
+# 6. FASE 3: AI DITUTUP
 # ============================================================
 def generate_ai_briefing(agency_news, member_news):
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        print("  [WARN] GEMINI_API_KEY tidak ditemukan di environment. Menggunakan fallback pesan default.")
-        return "Sistem intelijen aktif. Database tersinkronisasi. Silakan pilih sumber pelaporan lembaga untuk meninjau rilis pers (news) terbaru."
-    
-    try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        # Kumpulkan judul berita
-        titles = [n['title'] for n in agency_news if not n['title'].startswith('[')]
-        for m, n in member_news.items():
-            if not n.get('error'):
-                titles.append(f"{m}: {n['title']}")
-                
-        # Batasi jumlah judul agar tidak melebihi token
-        titles = titles[:50]
-        news_text = "\n".join(titles)
-        
-        prompt = f"""Anda adalah Penasihat Strategis (The Whispering General) untuk pemerintah Indonesia.
-Berikut adalah daftar judul berita terbaru hari ini terkait kementerian dan anggota Komisi VI DPR RI:
-
-{news_text}
-
-Tugas Anda:
-Buatkan 'Executive Briefing' sebanyak 1-2 paragraf yang singkat, padat, dan profesional, merangkum sentimen politik dan isu-isu strategis yang paling menonjol dari berita di atas. 
-Gaya bahasa: Bahasa Indonesia formal, elegan, seolah memberikan taklimat intelijen singkat kepada pimpinan negara.
-PENTING: Jangan gunakan format markdown (seperti **bold** atau bullet points). Gunakan teks murni saja."""
-        
-        print("  [AI] Menghubungi Gemini API untuk membuat Executive Briefing...")
-        response = model.generate_content(prompt)
-        print("  [AI] Briefing berhasil dibuat.")
-        return response.text.strip()
-    except Exception as e:
-        print(f"  [WARN] Gagal membuat AI briefing: {e}")
-        return "Sistem intelijen aktif. Database tersinkronisasi. (AI Briefing gagal dimuat)."
+    return "Sistem intelijen aktif. Fitur AI telah dinonaktifkan."
 
 # ============================================================
 # 7. FASE 4: MENGAMBIL DATA PASAR (YFINANCE)
