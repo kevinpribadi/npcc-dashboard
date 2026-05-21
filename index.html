@@ -53,7 +53,7 @@
 
     <style>
         :root {
-            --ticker-speed: 50; /* px/detik ‚Äî turunkan angka untuk memperlambat, naikkan untuk mempercepat */
+            --ticker-speed: 50; /* px/detik G«ˆ turunkan angka untuk memperlambat, naikkan untuk mempercepat */
         }
 
         * {
@@ -242,7 +242,7 @@
                             LIVE SYSTEM FEEDS
                         </div>
                     </div>
-                    {/* Ticker Tape ‚Äî kecepatan diatur via CSS var(--ticker-speed) di :root */}
+                    {/* Ticker Tape G«ˆ kecepatan diatur via CSS var(--ticker-speed) di :root */}
                     <div className="ticker-wrapper bg-slate-900/60 py-2.5 border-t border-slate-800/60 overflow-hidden relative">
                         <div
                             ref={tickerRef}
@@ -319,14 +319,14 @@
                             <IconActivity />
                             <span className="ml-2">BUMN Watchlist</span>
                         </h2>
-                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-500/30 px-1.5 py-0.5 rounded tracking-widest">‚óè IDX LIVE</span>
+                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-400/10 border border-emerald-500/30 px-1.5 py-0.5 rounded tracking-widest">G˘≈ IDX LIVE</span>
                     </div>
 
                     {/* Column header ala Bloomberg terminal */}
                     <div className="grid grid-cols-[1fr_auto_auto] gap-x-2 px-2 pb-1.5 mb-1 border-b border-slate-700/50 flex-shrink-0">
                         <span className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold">Emiten</span>
                         <span className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold text-right">Harga</span>
-                        <span className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold text-right w-16">Œî%</span>
+                        <span className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold text-right w-16">+ˆ%</span>
                     </div>
 
                     <div className="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
@@ -342,7 +342,7 @@
                                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${si.cls} ${si.glow}`}></div>
                                             <div className="min-w-0">
                                                 <div className="font-bold text-slate-100 text-xs leading-tight">{item.name}</div>
-                                                <div className="text-[9px] text-slate-500 font-mono">{item.code} ¬∑ <span className={si.textCls}>{si.label}</span></div>
+                                                <div className="text-[9px] text-slate-500 font-mono">{item.code} -+ <span className={si.textCls}>{si.label}</span></div>
                                             </div>
                                         </div>
                                         {/* Center: price */}
@@ -359,7 +359,7 @@
                                             <span className={`text-xs font-mono font-bold tabular-nums ${
                                                 isUp ? 'text-emerald-400' : 'text-rose-400'
                                             }`}>
-                                                {isUp ? '‚ñ≤' : '‚ñº'} {Math.abs(item.change).toFixed(2)}%
+                                                {isUp ? 'G˚¶' : 'G˚+'} {Math.abs(item.change).toFixed(2)}%
                                             </span>
                                         </div>
                                     </div>
@@ -371,7 +371,7 @@
                                     <div className="px-3 pb-2.5 pt-1">
                                         <div className="flex justify-between items-center mb-1">
                                             <span className="text-[8px] text-slate-500 uppercase tracking-widest font-semibold">PMN Terserap</span>
-                                            <span className="text-[8px] font-mono text-slate-400">{item.pmn.pct}% ¬∑ {item.pmn.label}</span>
+                                            <span className="text-[8px] font-mono text-slate-400">{item.pmn.pct}% -+ {item.pmn.label}</span>
                                         </div>
                                         <div className="w-full h-1 bg-slate-700/60 rounded-full overflow-hidden">
                                             <div
@@ -446,7 +446,7 @@
                         <h2 className="text-sm font-bold flex items-center text-slate-100 tracking-widest uppercase whitespace-nowrap">
                             <IconFactory />
                             <span className="ml-2">Trade Radar</span>
-                            <span className="text-slate-500 ml-2 font-normal text-xs normal-case tracking-normal">(USD Juta ¬∑ 6 Bulan)</span>
+                            <span className="text-slate-500 ml-2 font-normal text-xs normal-case tracking-normal">(USD Juta -+ 6 Bulan)</span>
                         </h2>
                         <div className="flex gap-1 flex-shrink-0">
                             {partners.map(p => (
@@ -463,7 +463,7 @@
                         </div>
                     </div>
 
-                    {/* Chart ‚Äî dibatasi tinggi agar tidak overflow layout */}
+                    {/* Chart G«ˆ dibatasi tinggi agar tidak overflow layout */}
                     <div className="w-full" style={{ height: '260px', flexShrink: 0 }}>
                         {hasRecharts ? (
                             <ResponsiveContainer width="100%" height="100%">
@@ -501,7 +501,7 @@
                             </ResponsiveContainer>
                         ) : (
                             <div className="flex items-center justify-center h-full text-slate-500 text-sm">
-                                ‚ö† Recharts library gagal dimuat
+                                G‹· Recharts library gagal dimuat
                             </div>
                         )}
                     </div>
@@ -514,14 +514,14 @@
                                 <span className="text-[9px] text-slate-400 font-semibold tracking-wider">{l.label}</span>
                             </div>
                         ))}
-                        <span className="text-[9px] text-slate-600 ml-auto font-mono">Warna muda = Impor ¬∑ Warna tua = Ekspor</span>
+                        <span className="text-[9px] text-slate-600 ml-auto font-mono">Warna muda = Impor -+ Warna tua = Ekspor</span>
                     </div>
                 </div>
             );
         };
 
         // ============================================================
-        // 4. POLITICAL INTEL ‚Äî Fraksi Komisi VI
+        // 4. POLITICAL INTEL G«ˆ Fraksi Komisi VI
         // ============================================================
         const KOMISI6_FRACTIONS = [
             { id: 'gerindra', name: 'Gerindra',  color: '#dc2626',
@@ -603,7 +603,7 @@
                         <h2 className="text-sm font-bold flex items-center text-slate-100 tracking-widest uppercase">
                             <IconShield />
                             <span className="ml-2">Political Intel</span>
-                            <span className="text-slate-500 ml-2 font-normal text-xs normal-case tracking-normal">‚Äî Fraksi Komisi VI DPR RI</span>
+                            <span className="text-slate-500 ml-2 font-normal text-xs normal-case tracking-normal">G«ˆ Fraksi Komisi VI DPR RI</span>
                         </h2>
                         {selectedFraksi && (
                             <span className="text-[9px] px-2 py-1 rounded font-bold tracking-widest border"
@@ -632,7 +632,7 @@
                         <div className="col-span-4 border-l border-slate-700/50 pl-4 overflow-y-auto">
                             {!selectedFraksi ? (
                                 <div className="flex items-center justify-center h-full text-slate-600 text-xs text-center px-4">
-                                    ‚Üê Pilih fraksi untuk melihat daftar anggota Komisi VI
+                                    GÂ… Pilih fraksi untuk melihat daftar anggota Komisi VI
                                 </div>
                             ) : (
                                 <>
@@ -640,10 +640,10 @@
                                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{background: selectedFraksi.color}}></span>
                                         <div>
                                             <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                                                {selectedFraksi.name} ‚Äî {selectedFraksi.members.length} Anggota
+                                                {selectedFraksi.name} G«ˆ {selectedFraksi.members.length} Anggota
                                             </span>
                                             {selectedFraksi.pimpinan && (
-                                                <div className="text-[9px] text-amber-400 font-semibold mt-0.5">‚≠ê {selectedFraksi.pimpinan}</div>
+                                                <div className="text-[9px] text-amber-400 font-semibold mt-0.5">G°… {selectedFraksi.pimpinan}</div>
                                             )}
                                         </div>
                                     </div>
@@ -680,7 +680,7 @@
                         <div className="col-span-6 border-l border-slate-700/50 pl-4 overflow-y-auto">
                             {!selectedMember ? (
                                 <div className="flex items-center justify-center h-full text-slate-600 text-xs text-center px-4">
-                                    ‚Üê Pilih anggota untuk melihat berita terbaru
+                                    GÂ… Pilih anggota untuk melihat berita terbaru
                                 </div>
                             ) : isLoading ? (
                                 <div className="fade-in space-y-3">
@@ -707,7 +707,7 @@
                                     <div className="flex items-center gap-2 mb-3">
                                         <span className="text-[9px] font-bold text-blue-400 uppercase tracking-widest bg-blue-400/10 border border-blue-500/30 px-2 py-0.5 rounded">LATEST NEWS</span>
                                         {news.source === 'live' && (
-                                            <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-400/10 border border-emerald-500/30 px-2 py-0.5 rounded">‚óè LIVE</span>
+                                            <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-400/10 border border-emerald-500/30 px-2 py-0.5 rounded">G˘≈ LIVE</span>
                                         )}
                                     </div>
                                     <div className="text-xs font-bold text-slate-100 mb-2">{selectedMember}</div>
@@ -716,7 +716,7 @@
                                         <div className="flex items-center justify-between pt-2 border-t border-slate-700/40">
                                             <span className="text-[9px] text-slate-500 font-mono">{news.published}</span>
                                             <a href={news.link} target="_blank" rel="noreferrer"
-                                                className="text-[9px] text-blue-400 hover:text-blue-300 underline underline-offset-2">Buka Artikel ‚ûö</a>
+                                                className="text-[9px] text-blue-400 hover:text-blue-300 underline underline-offset-2">Buka Artikel GP‹</a>
                                         </div>
                                     </div>
                                 </div>
@@ -724,12 +724,12 @@
                                 <div className="fade-in">
                                     <div className="text-xs font-bold text-slate-100 mb-3">{selectedMember}</div>
                                     <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40 text-center space-y-3">
-                                        <div className="text-slate-500 text-xl">üì°</div>
+                                        <div className="text-slate-500 text-xl">=ÉÙÌ</div>
                                         <p className="text-[10px] text-slate-400">Tidak ada berita ditemukan untuk anggota ini.</p>
                                         <button
                                             onClick={() => { setLiveCache(prev => { const n = {...prev}; delete n[selectedMember]; return n; }); fetchLiveNews(selectedMember); }}
                                             className="text-[9px] px-3 py-1.5 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 transition-all font-semibold tracking-wider">
-                                            üîÑ Coba Ambil Ulang
+                                            =Éˆ‰ Coba Ambil Ulang
                                         </button>
                                     </div>
                                 </div>
@@ -743,18 +743,9 @@
         // ============================================================
         // 5. FISCAL STRESS TEST
         // ============================================================
-        const FiscalStressTest = ({ marketData }) => {
+        const FiscalStressTest = () => {
             const [kurs, setKurs] = useState(15500);
             const [oil, setOil] = useState(82);
-            const [hasInit, setHasInit] = useState(false);
-
-            useEffect(() => {
-                if (!hasInit && marketData && (marketData.kurs || marketData.oil)) {
-                    if (marketData.kurs) setKurs(marketData.kurs);
-                    if (marketData.oil) setOil(marketData.oil);
-                    setHasInit(true);
-                }
-            }, [marketData, hasInit]);
 
             const konstantaMultiplier = 0.35;
             const subsidy = useMemo(() => kurs * oil * konstantaMultiplier, [kurs, oil]);
@@ -770,7 +761,7 @@
                         </h2>
                         {isAlert && (
                             <span className="flex items-center text-[10px] font-bold bg-rose-500/20 text-rose-400 px-2.5 py-1 rounded border border-rose-500/50 animate-pulse tracking-widest">
-                                ‚ö† DEFICIT WARNING
+                                G‹· DEFICIT WARNING
                             </span>
                         )}
                     </div>
@@ -784,7 +775,7 @@
                                         Rp {kurs.toLocaleString('id-ID')}
                                     </span>
                                 </div>
-                                <input type="range" min="14000" max="17000" step="1"
+                                <input type="range" min="14000" max="17000" step="50"
                                     value={kurs} onChange={e => setKurs(Number(e.target.value))} />
                             </div>
                             <div>
@@ -918,7 +909,7 @@
                                                     </ul>
                                                 </div>
                                             ))}
-                                            <a href={m.topicData.link} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 italic font-medium w-full text-right underline underline-offset-2">Buka Artikel Berita Asli ‚ûö</a>
+                                            <a href={m.topicData.link} target="_blank" rel="noreferrer" className="text-[10px] text-blue-400 hover:text-blue-300 mt-1 italic font-medium w-full text-right underline underline-offset-2">Buka Artikel Berita Asli GP‹</a>
                                         </div>
                                     ) : m.isIntro ? (
                                         <TypewriterText text={m.text} />
@@ -961,7 +952,6 @@
             const [liveData, setLiveData] = useState([]);
             const [memberNews, setMemberNews] = useState({});
             const [aiBriefing, setAiBriefing] = useState("");
-            const [marketData, setMarketData] = useState({ kurs: null, oil: null });
             const [loading, setLoading] = useState(true);
             const [fetchError, setFetchError] = useState(null);
 
@@ -982,10 +972,6 @@
                                 setLiveData(data.agency_news || []);
                                 setMemberNews(data.member_news || {});
                                 setAiBriefing(data.ai_briefing || "");
-                                setMarketData({
-                                    kurs: data.live_kurs || null,
-                                    oil: data.live_minyak || null
-                                });
                             }
                             setFetchError(null);
                         })
@@ -1020,15 +1006,15 @@
                         <div className="col-span-12 lg:col-span-6">
                             <TradeRadar />
                         </div>
-                        {/* Right column: Whispering General (Sejajar dengan Trade Radar) */}
+                        {/* Center column bottom: Fiscal Stress */}
+                        <div className="col-span-12 lg:col-span-6">
+                            <FiscalStressTest />
+                        </div>
+                        {/* Right column: Whispering General */}
                         <div className="col-span-12 lg:col-span-3 row-span-2">
                             <WhisperingGeneral liveData={liveData} loading={loading} fetchError={fetchError} aiBriefing={aiBriefing} />
                         </div>
-                        {/* Center column bottom: Fiscal Stress */}
-                        <div className="col-span-12 lg:col-span-6">
-                            <FiscalStressTest marketData={marketData} />
-                        </div>
-                        {/* Bottom row: Political Intel ‚Äî full width */}
+                        {/* Bottom row: Political Intel G«ˆ full width */}
                         <div className="col-span-12">
                             <PoliticalIntel memberNews={memberNews} />
                         </div>

@@ -1,5 +1,4 @@
 feedparser
-schedule
-requests
-google-generativeai
 yfinance
+requests
+urllib3
