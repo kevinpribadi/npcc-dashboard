@@ -1,4 +1,0 @@
-feedparser
-yfinance
-requests
-urllib3
